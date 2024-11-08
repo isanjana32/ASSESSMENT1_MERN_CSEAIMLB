@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Currency Converter Dashboard</title>
+  <link rel="stylesheet" href="st.css" />
+</head>
+<body>
+  <div class="header">Currency Converter App</div>
+  <div class="menu-bar">
+    <a href="#" onclick="showConverter()"></a>
+  </div>
+
+  <div class="content">
+    <div class="converter-container" id="converter">
+      <h2>Currency Converter</h2>
+      <div class="form-group">
+        <label for="amount">Amount:</label>
+        <input
+          type="number"
+          id="amount"
+          placeholder="Enter amount"
+          value="1"
+        />
+        <select id="fromCurrency"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="toCurrency">Convert to:</label>
+        <input type="text" id="convertedAmount" readonly />
+        <select id="toCurrency"></select>
+      </div>
+
+      <button onclick="convertCurrency()">Convert</button>
+
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    function showConverter() {
+      document.getElementById("converter").style.display = "block";
+    }
+
+    async function loadCurrencies() {
+      try {
+        const response = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+        const data = await response.json();
+        const fromCurrencyDropdown = document.getElementById("fromCurrency");
+        const toCurrencyDropdown = document.getElementById("toCurrency");
+
+        for (const currency in data.rates) {
+          const optionFrom = document.createElement("option");
+          const optionTo = document.createElement("option");
+          
+          optionFrom.value = currency;
+          optionFrom.text = `${currency}`;
+          fromCurrencyDropdown.add(optionFrom);
+
+          optionTo.value = currency;
+          optionTo.text = `${currency}`;
+          toCurrencyDropdown.add(optionTo);
+        }
+
+        // Set default values for initial conversion
+        fromCurrencyDropdown.value = "USD";
+        toCurrencyDropdown.value = "EUR";
+      } catch (error) {
+        console.error("Error fetching currencies:", error);
+      }
+    }
+
+    loadCurrencies();
+
+    async function convertCurrency() {
+      const fromCurrency = document.getElementById("fromCurrency").value;
+      const toCurrency = document.getElementById("toCurrency").value;
+      const amount = document.getElementById("amount").value;
+      const resultDiv = document.getElementById("result");
+      const convertedAmountField = document.getElementById("convertedAmount");
+
+      if (amount === "" || isNaN(amount)) {
+        resultDiv.innerText = "Please enter a valid amount.";
+        return;
+      }
+
+      try {
+        const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+        const data = await response.json();
+
+        const rate = data.rates[toCurrency];
+        if (!rate) {
+          resultDiv.innerText = `Conversion rate not available for ${toCurrency}.`;
+          return;
+        }
+
+        const convertedAmount = (amount * rate).toFixed(2);
+        convertedAmountField.value = convertedAmount;
+        resultDiv.innerText = `Converted Amount: ${convertedAmount} ${toCurrency}`;
+      } catch (error) {
+        resultDiv.innerText = "Error fetching conversion rates. Please try again.";
+      }
+    }
+  </script>
+</body>
+</html>
